@@ -8,18 +8,29 @@
 <body>
   <div class="container">
     <h1 class="mt-4">Alarm Clock</h1>
+    <div class="clock">
+      <div class="hour-hand hand"></div>
+      <div class="minute-hand hand"></div>
+      <div class="second-hand hand"></div>
+    </div>
     <div class="form-group">
-      <label for="alarmTime">Set Alarm Time:</label>
-      <input type="time" class="form-control" id="alarmTime">
+      <label for="alarmHour">Set Alarm Time:</label>
+      <input type="number" class="form-control" id="alarmHour" placeholder="Hour" min="1" max="12">
+      <input type="number" class="form-control" id="alarmMinute" placeholder="Minute" min="0" max="59">
+      <input type="number" class="form-control" id="alarmSecond" placeholder="Second" min="0" max="59">
+      <select class="form-control" id="alarmPeriod">
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
     </div>
     <button class="btn btn-primary" onclick="setAlarm()">Set Alarm</button>
-    <button class="btn btn-danger" onclick="clearAlarm()">Clear Alarm</button>
-    <div id="status"></div>
+    <div id="alarmsList" class="mt-4"></div>
   </div>
   
   <script src="script.js"></script>
 </body>
 </html>
+
 
 CSS CODE For Alarm Clock 
 
@@ -46,27 +57,18 @@ h1 {
 }
 
 /* Input Styles */
-.input-time {
+.form-control {
   width: 100%;
   padding: 10px;
-  border: none;
-  border-bottom: 2px solid #fff;
-  background-color: transparent;
   font-size: 18px;
-  color: #fff;
-  margin-top: 20px;
-  outline: none;
-}
-
-.input-time:focus {
-  border-color: #f9c147;
+  margin-top: 10px;
 }
 
 /* Button Styles */
 .btn {
   display: inline-block;
   padding: 10px 20px;
-  margin-top: 20px;
+  margin-top: 10px;
   border: none;
   border-radius: 5px;
   font-size: 16px;
@@ -86,27 +88,15 @@ h1 {
   background-color: #e74c3c;
 }
 
-/* Status Styles */
-.status {
-  margin-top: 20px;
-  text-align: center;
-  font-size: 18px;
-  color: #fff;
-}
-
 /* Clock Styles */
 .clock {
   width: 200px;
   height: 200px;
   border-radius: 50%;
   background-color: #333;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+  display: inline-block;
+  margin: 20px;
 }
 
 .clock::before {
@@ -162,42 +152,81 @@ h1 {
   background-color: red;
 }
 
+/* Alarms List Styles */
+#alarmsList {
+  margin-top: 20px;
+  color: #fff;
+}
+
+
 JAVASCRIPT of the Simple Alarm Clock
 
-// Store the alarm sound
 var alarmSound = new Audio('alarm_sound.mp3');
+var alarms = [];
 
-// Function to set the alarm
 function setAlarm() {
-  var alarmInput = document.getElementById('alarmTime').value;
-  var alarmTime = new Date(alarmInput);
-  var now = new Date();
-
-  // Check if the entered time is in the past
-  if (alarmTime < now) {
-    alert("Please select a future time for the alarm.");
+  var alarmHour = parseInt(document.getElementById('alarmHour').value);
+  var alarmMinute = parseInt(document.getElementById('alarmMinute').value);
+  var alarmSecond = parseInt(document.getElementById('alarmSecond').value);
+  var alarmPeriod = document.getElementById('alarmPeriod').value;
+  
+  if (isNaN(alarmHour) || isNaN(alarmMinute) || isNaN(alarmSecond)) {
+    alert("Please enter valid numbers for hour, minute, and second.");
     return;
+  }
+  
+  if (alarmHour < 1 || alarmHour > 12 || alarmMinute < 0 || alarmMinute > 59 || alarmSecond < 0 || alarmSecond > 59) {
+    alert("Please enter valid values for hour (1-12), minute (0-59), and second (0-59).");
+    return;
+  }
+
+  var now = new Date();
+  var alarmTime = new Date();
+
+  alarmTime.setHours(alarmHour);
+  alarmTime.setMinutes(alarmMinute);
+  alarmTime.setSeconds(alarmSecond);
+  alarmTime.setMilliseconds(0);
+
+  if (alarmPeriod === "PM") {
+    alarmTime.setHours(alarmTime.getHours() + 12);
+  }
+
+  if (alarmTime < now) {
+    alarmTime.setDate(alarmTime.getDate() + 1);
   }
 
   var timeDifference = alarmTime - now;
 
-  // Set a timeout to trigger the alarm at the specified time
+  alarms.push({ time: alarmTime, id: alarms.length + 1 });
+
   setTimeout(function() {
     playAlarm();
   }, timeDifference);
-  
-  document.getElementById('status').innerHTML = 'Alarm set for ' + alarmTime.toLocaleTimeString();
+
+  displayAlarms();
 }
 
-// Function to play the alarm sound
 function playAlarm() {
   alarmSound.play();
-  document.getElementById('status').innerHTML = 'Wake up!';
+  alert('Wake up!');
 }
 
-// Function to clear the alarm
-function clearAlarm() {
-  alarmSound.pause();
-  alarmSound.currentTime = 0;
-  document.getElementById('status').innerHTML = '';
+function displayAlarms() {
+  var alarmsListDiv = document.getElementById('alarmsList');
+  alarmsListDiv.innerHTML = "";
+
+  alarms.forEach(function(alarm) {
+    var alarmTime = alarm.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    var deleteButton = '<button class="btn btn-danger" onclick="deleteAlarm(' + alarm.id + ')">Delete</button>';
+    alarmsListDiv.innerHTML += '<p>Alarm set for ' + alarmTime + ' ' + deleteButton + '</p>';
+  });
+}
+
+function deleteAlarm(alarmId) {
+  alarms = alarms.filter(function(alarm) {
+    return alarm.id !== alarmId;
+  });
+
+  displayAlarms();
 }
