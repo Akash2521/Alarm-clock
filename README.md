@@ -21,6 +21,8 @@
 </body>
 </html>
 
+CSS CODE For Alarm Clock 
+
 /* Container Styles */
 .container {
   max-width: 400px;
@@ -159,6 +161,8 @@ h1 {
   left: calc(50% - 1px);
   background-color: red;
 }
+
+JAVASCRIPT of the Simple Alarm Clock
 
 // Store the alarm sound
 var alarmSound = new Audio('alarm_sound.mp3');
